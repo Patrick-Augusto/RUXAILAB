@@ -1,7 +1,21 @@
 // @ts-check
-const { defineConfig, devices } = require('@playwright/test');
+const { defineConfig, devices } = require('@playwright/test')
 
-const devBaseUrl = 'http://localhost:8080';
+const devBaseUrl = 'http://localhost:8080'
+const isCi = !!process.env.CI
+const reporter =
+  process.env.PLAYWRIGHT_REPORTER === 'json'
+    ? [
+        [
+          'json',
+          {
+            outputFile:
+              process.env.PLAYWRIGHT_JSON_OUTPUT_NAME ||
+              'reliability-results.json',
+          },
+        ],
+      ]
+    : 'html'
 
 module.exports = defineConfig({
   testDir: './e2e',
@@ -18,7 +32,7 @@ module.exports = defineConfig({
   workers: process.env.CI ? 1 : undefined,
 
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  reporter,
 
   /* Output directory for screenshots of failed tests */
   outputDir: './playwright/output',
@@ -39,6 +53,15 @@ module.exports = defineConfig({
     navigationTimeout: 30000,
   },
 
+  webServer: isCi
+    ? {
+        command: 'npm run serve -- --host 0.0.0.0 --port 8080',
+        url: devBaseUrl,
+        reuseExistingServer: false,
+        timeout: 120000,
+      }
+    : undefined,
+
   /* Configure projects for major browsers */
   projects: [
     {
@@ -55,9 +78,9 @@ module.exports = defineConfig({
     },
     {
       name: 'webkit',
-      use: { 
-        ...devices['Desktop Safari'], 
+      use: {
+        ...devices['Desktop Safari'],
       },
     },
   ],
-});
+})
